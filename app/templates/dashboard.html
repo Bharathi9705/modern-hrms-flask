@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% block title %}Executive Analytics Data Streams Console Container{% endblock %}
+{% block content %}
+
+<div class="flex min-h-screen w-full overflow-hidden">
+    
+    {% include 'sidebar.html' %}
+
+    <main class="flex-1 bg-[#0b0f19] p-8 overflow-y-auto space-y-8">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/60 pb-6">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-white flex items-center gap-3">
+                    Workspace Intelligence <span class="text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1.5"><span class="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Active Stream</span>
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Real-time analytical infrastructure telemetry metrics visualization layer.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openEmployeeProvisioningModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i> Provision New Profile
+                </button>
+                <button onclick="pullLatestDashboardDataMetricsStream()" class="bg-[#1f2937] hover:bg-[#374151] border border-slate-700/60 text-slate-200 font-bold text-xs px-4 py-3 rounded-xl transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-arrows-rotate"></i> Synchronize Streams
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-[#111827]/60 border border-slate-800 p-6 rounded-2xl flex items-center gap-5 shadow-sm relative overflow-hidden group">
+                <div class="p-4 bg-indigo-500/10 text-indigo-400 rounded-xl text-2xl group-hover:scale-110 transition duration-300"><i class="fa-solid fa-users-gear"></i></div>
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Total Active Headcount</p>
+                    <h3 id="metricHeadcount" class="text-3xl font-black text-white mt-1">0</h3>
+                </div>
+            </div>
+            <div class="bg-[#111827]/60 border border-slate-800 p-6 rounded-2xl flex items-center gap-5 shadow-sm relative overflow-hidden group">
+                <div class="p-4 bg-emerald-500/10 text-emerald-400 rounded-xl text-2xl group-hover:scale-110 transition duration-300"><i class="fa-solid fa-user-check"></i></div>
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Present Today</p>
+                    <h3 id="metricAttendance" class="text-3xl font-black text-emerald-400 mt-1">0</h3>
+                </div>
+            </div>
+            <div class="bg-[#111827]/60 border border-slate-800 p-6 rounded-2xl flex items-center gap-5 shadow-sm relative overflow-hidden group">
+                <div class="p-4 bg-amber-500/10 text-amber-400 rounded-xl text-2xl group-hover:scale-110 transition duration-300"><i class="fa-solid fa-business-time"></i></div>
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Pending Leave Requests</p>
+                    <h3 id="metricLeaves" class="text-3xl font-black text-amber-400 mt-1">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-[#111827]/40 border border-slate-800/80 p-6 rounded-2xl">
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-indigo-500"></i> Corporate Structural Allocation</h3>
+                <div class="relative h-64"><canvas id="canvasDeptChart"></canvas></div>
+            </div>
+            <div class="bg-[#111827]/40 border border-slate-800/80 p-6 rounded-2xl">
+                <h3 class="text-sm font-black uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2"><i class="fa-solid fa-chart-column text-indigo-500"></i> Work Shift Attendance Trend</h3>
+                <div class="relative h-64"><canvas id="canvasAttChart"></canvas></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="modalEmployeeProvision" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
+    <div class="bg-[#111827] border border-slate-800 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden transform transition-all scale-95 duration-300">
+        <div class="bg-[#1f2937]/50 border-b border-slate-800/80 p-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-black text-white">System Employee Provisioning Model</h2>
+                <p class="text-xs text-slate-400 mt-1">Inject dynamic user database references across core server schemas.</p>
+            </div>
+            <button onclick="closeEmployeeProvisioningModal()" class="text-slate-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <form id="formProvisionProfile" onsubmit="executeProfileProvisioningSubmitPipeline(event)" class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">First Name</label>
+                    <input type="text" id="provFirstName" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Last Name</label>
+                    <input type="text" id="provLastName" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Username Handle</label>
+                    <input type="text" id="provUsername" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Account System Role</label>
+                    <select id="provRole" class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <option value="employee">Employee Tier</option>
+                        <option value="admin">Administrator Tier</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Unique ID Code</label>
+                    <input type="text" id="provEmpId" placeholder="EMP-2026-XXXX" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Email Address</label>
+                    <input type="email" id="provEmail" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Department</label>
+                    <input type="text" id="provDept" placeholder="Engineering, HR, Core Systems" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Designation Title</label>
+                    <input type="text" id="provDesignation" placeholder="Senior Engineer" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Base Salary ($)</label>
+                    <input type="number" step="0.01" id="provSalary" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Joining Date</label>
+                    <input type="date" id="provJoiningDate" required class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            
+            <div class="pt-4 flex justify-end gap-3 border-t border-slate-800">
+                <button type="button" onclick="closeEmployeeProvisioningModal()" class="bg-[#1f2937] hover:bg-[#374151] px-5 py-2.5 rounded-xl text-xs font-bold transition text-slate-300 cursor-pointer">Cancel</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-lg shadow-indigo-600/20 transition cursor-pointer">Execute Provisioning</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // PATCH FALLBACK ENGINE
+    // ==========================================
+    function getAuthenticatedIdentityClaims() {
+        const token = localStorage.getItem('access_token');
+        if (!token) return null;
+        try {
+            const base64Url = token.split('.')[1];
+            if (base64Url) {
+                return JSON.parse(window.atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')));
+            }
+        } catch (e) {
+            console.error("Token structural parsing error:", e);
+        }
+        return { sub: "Admin User", role: "admin" };
+    }
+
+    async function runAuthenticatedSecureTransaction(url, options = {}) {
+        const token = localStorage.getItem('access_token');
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+        
+        const config = {
+            method: options.method || 'GET',
+            headers: headers
+        };
+        if (options.body) config.body = options.body;
+
+        try {
+            const response = await fetch(url, config);
+            if (response.status === 401) {
+                window.location.href = '/';
+                return null;
+            }
+            return response;
+        } catch (err) {
+            console.error("Network telemetry failure:", err);
+            return null;
+        }
+    }
+
+    // ==========================================
+    // CORE DASHBOARD PIPELINES
+    // ==========================================
+    let DeptChartInstance = null;
+    let AttChartInstance = null;
+
+    function verifySystemConsoleIdentityContext() {
+        const identity = getAuthenticatedIdentityClaims();
+        if (!identity) {
+            window.location.href = '/';
+            return;
+        }
+        
+        const targetNameElement = document.getElementById('userConsoleName');
+        const targetRoleElement = document.getElementById('userConsoleRole');
+        const targetAvatarElement = document.getElementById('userConsoleAvatar');
+        
+        if (targetNameElement) targetNameElement.textContent = identity.sub || "System Identity Account";
+        if (targetRoleElement) targetRoleElement.textContent = identity.role || "Employee Tier";
+        if (identity.sub && targetAvatarElement) {
+            targetAvatarElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(identity.sub)}&background=4f46e5&color=fff&bold=true`;
+        }
+    }
+
+    async function pullLatestDashboardDataMetricsStream() {
+        const res = await runAuthenticatedSecureTransaction('/api/dashboard/metrics');
+        if(!res) return;
+        const metrics = await res.json();
+
+        document.getElementById('metricHeadcount').textContent = metrics.total_employees;
+        document.getElementById('metricAttendance').textContent = metrics.present_today;
+        document.getElementById('metricLeaves').textContent = metrics.pending_leaves;
+
+        renderDepartmentPieGraph(metrics.department_distribution);
+        renderWeeklyAttendanceChart(metrics.attendance_trends);
+    }
+
+    function renderDepartmentPieGraph(dataMap) {
+        const ctx = document.getElementById('canvasDeptChart').getContext('2d');
+        if (DeptChartInstance) DeptChartInstance.destroy();
+
+        DeptChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(dataMap),
+                datasets: [{
+                    data: Object.values(dataMap),
+                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                    borderWidth: 2,
+                    borderColor: '#111827'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { weight: 'bold', size: 11 } } } }
+            }
+        });
+    }
+
+    function renderWeeklyAttendanceChart(trendsArray) {
+        const ctx = document.getElementById('canvasAttChart').getContext('2d');
+        if (AttChartInstance) AttChartInstance.destroy();
+
+        AttChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: trendsArray.map(t => t.date),
+                datasets: [{
+                    label: 'Present Records',
+                    data: trendsArray.map(t => t.count),
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                    x: { ticks: { color: '#64748b' }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function openEmployeeProvisioningModal() {
+        const modal = document.getElementById('modalEmployeeProvision');
+        modal.classList.remove('hidden');
+    }
+
+    function closeEmployeeProvisioningModal() {
+        const modal = document.getElementById('modalEmployeeProvision');
+        modal.classList.add('hidden');
+        document.getElementById('formProvisionProfile').reset();
+    }
+
+    async function executeProfileProvisioningSubmitPipeline(event) {
+        event.preventDefault();
+        
+        const payload = {
+            first_name: document.getElementById('provFirstName').value,
+            last_name: document.getElementById('provLastName').value,
+            username: document.getElementById('provUsername').value,
+            role: document.getElementById('provRole').value,
+            employee_id: document.getElementById('provEmpId').value,
+            email: document.getElementById('provEmail').value,
+            department: document.getElementById('provDept').value,
+            designation: document.getElementById('provDesignation').value,
+            salary: parseFloat(document.getElementById('provSalary').value),
+            joining_date: document.getElementById('provJoiningDate').value
+        };
+
+        const res = await runAuthenticatedSecureTransaction('/api/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        if (res && res.status === 201) {
+            alert("System Profile Provisioning Executed Successfully!");
+            closeEmployeeProvisioningModal();
+            pullLatestDashboardDataMetricsStream();
+        } else {
+            const errData = res ? await res.json() : {};
+            alert("Provisioning Failure: " + (errData.error || "Unknown Cluster Error"));
+        }
+    }
+
+    // Boot Sequence Execution Pipeline
+    document.addEventListener('DOMContentLoaded', () => {
+        verifySystemConsoleIdentityContext();
+        pullLatestDashboardDataMetricsStream();
+    });
+</script>
+{% endblock %}

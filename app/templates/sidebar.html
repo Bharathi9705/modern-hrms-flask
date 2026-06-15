@@ -1,0 +1,55 @@
+<aside class="w-72 bg-[#111827] border-r border-slate-800 p-6 flex flex-col gap-2 shrink-0 min-h-screen">
+    <div class="flex items-center gap-3 mb-8 px-2">
+        <div class="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/20">
+            <i class="fa-solid fa-shield-halved text-lg"></i>
+        </div>
+        <div>
+            <span class="font-black text-sm block tracking-wider text-white uppercase">HRMS CORE</span>
+            <span class="text-[10px] text-indigo-400 block tracking-widest font-bold uppercase">v2.4 Console</span>
+        </div>
+    </div>
+
+    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 mb-2">Management Operations</p>
+    
+    <a href="/view/dashboard" id="nav-dash" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
+        <i class="fa-solid fa-chart-pie text-base w-5 text-center"></i> Operational Dashboard
+    </a>
+    <a href="/view/employees" id="nav-emp" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
+        <i class="fa-solid fa-users text-base w-5 text-center"></i> Employee Directory
+    </a>
+    <a href="/view/attendance" id="nav-att" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
+        <i class="fa-solid fa-calendar-check text-base w-5 text-center"></i> Clock & Attendance
+    </a>
+    <a href="/view/leaves" id="nav-leaves" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
+        <i class="fa-solid fa-envelope-open-text text-base w-5 text-center"></i> Applications
+    </a>
+
+    <div class="mt-auto bg-[#1f2937]/50 rounded-2xl p-4 border border-slate-800/80">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="h-9 w-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-sm uppercase" id="userInitial">A</div>
+            <div class="min-w-0 flex-1">
+                <p id="userConsoleName" class="text-xs font-bold text-white truncate">Admin User</p>
+                <span id="userConsoleRole" class="text-[9px] font-black uppercase tracking-wider text-indigo-400">Admin Tier</span>
+            </div>
+        </div>
+        <button onclick="localStorage.removeItem('access_token'); window.location.href='/';" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-bold text-xs text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 transition cursor-pointer">
+            <i class="fa-solid fa-power-off"></i> Terminate Link
+        </button>
+    </div>
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Highlight active link matching current URL path
+        const path = window.location.pathname;
+        if(path.includes('dashboard')) {
+            document.getElementById('nav-dash').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
+        } else if(path.includes('employees')) {
+            document.getElementById('nav-emp').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
+        } else if(path.includes('attendance')) {
+            document.getElementById('nav-att').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
+        } else if(path.includes('leaves')) {
+            document.getElementById('nav-leaves').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
+        }
+    });
+</script>

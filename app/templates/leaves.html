@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}Leave Management — HRMS Portal{% endblock %}
+{% block content %}
+<div class="flex min-h-screen w-full overflow-hidden">
+    {% include 'sidebar.html' %}
+
+    <main class="flex-1 bg-[#0b0f19] p-8 overflow-y-auto space-y-8">
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/60 pb-6">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-white">Leave Management</h1>
+                <p class="text-slate-400 text-sm mt-1">Manage and track employee leave requests.</p>
+            </div>
+        </div>
+
+        <!-- Attendance Clock Widget -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl border border-indigo-500/20 flex items-center justify-between">
+            <div>
+                <p id="attendanceStatusLabel" class="text-sm font-black text-slate-200">Status: Checking...</p>
+                <p id="shiftTimerLabel" class="text-xs text-slate-400 mt-1">Loading shift data...</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="liveClockDisplay" class="text-sm font-mono font-bold bg-black/30 px-3 py-1 rounded text-indigo-300">00:00:00</span>
+                <button id="biometricClockBtn" onclick="executeBiometricTerminalTransaction()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-solid fa-fingerprint"></i> <span id="clockBtnText">Clock In</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Apply Leave Form -->
+        <div class="bg-[#111827]/60 border border-slate-800 p-6 rounded-2xl">
+            <h3 class="text-sm font-black mb-4 flex items-center gap-2 text-white">
+                <i class="fa-solid fa-paper-plane text-indigo-500"></i> Apply for Leave
+            </h3>
+            <form id="submissionLeaveForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Leave Type</label>
+                    <select id="leaveFormType" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-slate-200">
+                        <option value="Casual">Casual Leave</option>
+                        <option value="Sick">Sick Leave</option>
+                        <option value="Earned">Earned Leave</option>
+                        <option value="WFH">Work From Home</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Start Date</label>
+                    <input type="date" id="leaveFormStart" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">End Date</label>
+                    <input type="date" id="leaveFormEnd" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Reason</label>
+                    <input type="text" id="leaveFormReason" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-white" placeholder="Reason for leave...">
+                </div>
+                <div class="md:col-span-4 flex justify-end">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-3 rounded-xl text-xs transition shadow-lg cursor-pointer">Submit Leave Request</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Leave Table -->
+        <div class="bg-[#111827]/40 border border-slate-800/80 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-800/50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-700/40">
+                            <th class="py-4 px-6">Employee</th>
+                            <th class="py-4 px-6">Type</th>
+                            <th class="py-4 px-6">Dates</th>
+                            <th class="py-4 px-6">Reason</th>
+                            <th class="py-4 px-6">Status</th>
+                            <th class="py-4 px-6 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaveApplicationsSlot" class="divide-y divide-slate-700/30 text-sm text-slate-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    let isClockedIn = false;
+    let clockInTimestamp = null;
+    let shiftDurationIntervalId = null;
+
+    // Get current user claims
+    const CurrentUserContext = getAuthenticatedIdentityClaims() || { sub: 'User', role: 'employee' };
+
+    // Live clock
+    setInterval(() => {
+        document.getElementById('liveClockDisplay').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Clock in/out
+    async function executeBiometricTerminalTransaction() {
+        const action = isClockedIn ? 'clock_out' : 'clock_in';
+        const res = await runAuthenticatedSecureTransaction('/api/attendance/clock-action', {
+            method: 'POST',
+            body: JSON.stringify({ action })
+        });
+        if (res && (res.status === 200 || res.status === 201)) {
+            await syncBiometricTerminalState();
+        } else if (res) {
+            const err = await res.json();
+            alert(err.error || "Clock action failed.");
+        }
+    }
+
+    async function syncBiometricTerminalState() {
+        const res = await runAuthenticatedSecureTransaction('/api/attendance/status');
+        if (!res) return;
+        const matrix = await res.json();
+
+        const btn = document.getElementById('biometricClockBtn');
+        const text = document.getElementById('clockBtnText');
+        const statusLabel = document.getElementById('attendanceStatusLabel');
+        const timerLabel = document.getElementById('shiftTimerLabel');
+
+        clearInterval(shiftDurationIntervalId);
+
+        if (matrix.status === 'clocked_in') {
+            isClockedIn = true;
+            clockInTimestamp = new Date();
+            statusLabel.innerText = "Status: Active Shift";
+            statusLabel.className = "text-sm font-black text-emerald-400";
+            text.innerText = "Clock Out";
+            btn.className = "bg-rose-500 hover:bg-rose-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-1.5";
+            shiftDurationIntervalId = setInterval(() => {
+                const delta = new Date() - clockInTimestamp;
+                const h = String(Math.floor(delta / 3600000)).padStart(2, '0');
+                const m = String(Math.floor((delta % 3600000) / 60000)).padStart(2, '0');
+                const s = String(Math.floor((delta % 60000) / 1000)).padStart(2, '0');
+                timerLabel.innerText = `Shift running: ${h}:${m}:${s}`;
+            }, 1000);
+        } else {
+            isClockedIn = false;
+            statusLabel.innerText = "Status: Checked Out";
+            statusLabel.className = "text-sm font-black text-slate-200";
+            text.innerText = "Clock In";
+            btn.className = "bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-1.5";
+            timerLabel.innerText = "No active shift.";
+        }
+    }
+
+    async function populateLeaveTable() {
+        const res = await runAuthenticatedSecureTransaction('/api/leaves');
+        if (!res) return;
+        const leaves = await res.json();
+
+        const slot = document.getElementById('leaveApplicationsSlot');
+        if (!leaves || leaves.length === 0) {
+            slot.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No leave requests found.</td></tr>`;
+            return;
+        }
+
+        slot.innerHTML = leaves.map(item => `
+            <tr class="hover:bg-slate-800/20 transition">
+                <td class="py-4 px-6 font-bold text-white text-xs">${item.employee_name || 'N/A'}</td>
+                <td class="py-4 px-6"><span class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-400">${item.leave_type}</span></td>
+                <td class="py-4 px-6 font-mono text-xs text-slate-400">${item.start_date} → ${item.end_date}</td>
+                <td class="py-4 px-6 text-xs text-slate-300 max-w-xs truncate">${item.reason || '-'}</td>
+                <td class="py-4 px-6">
+                    <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                        item.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400' :
+                        item.status === 'Rejected' ? 'bg-rose-500/10 text-rose-400' : 'bg-amber-500/10 text-amber-400'
+                    }">${item.status}</span>
+                </td>
+                <td class="py-4 px-6 text-center">
+                    ${CurrentUserContext.role !== 'employee' && item.status === 'Pending' ? `
+                        <button onclick="transitionLeave(${item.id}, 'Approved')" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl mr-1 cursor-pointer"><i class="fa-solid fa-check"></i> Approve</button>
+                        <button onclick="transitionLeave(${item.id}, 'Rejected')" class="bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer"><i class="fa-solid fa-xmark"></i> Reject</button>
+                    ` : `<span class="text-xs text-slate-500">—</span>`}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('submissionLeaveForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            leave_type: document.getElementById('leaveFormType').value,
+            start_date: document.getElementById('leaveFormStart').value,
+            end_date: document.getElementById('leaveFormEnd').value,
+            reason: document.getElementById('leaveFormReason').value
+        };
+        const res = await runAuthenticatedSecureTransaction('/api/leaves/apply', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        if (res && res.status === 201) {
+            alert("Leave request submitted successfully!");
+            document.getElementById('submissionLeaveForm').reset();
+            populateLeaveTable();
+        } else if (res) {
+            const err = await res.json();
+            alert(err.error || "Submission failed.");
+        }
+    });
+
+    async function transitionLeave(id, status) {
+        const res = await runAuthenticatedSecureTransaction(`/api/leaves/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+        });
+        if (res && res.ok) {
+            populateLeaveTable();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        syncBiometricTerminalState();
+        populateLeaveTable();
+    });
+</script>
+{% endblock %}

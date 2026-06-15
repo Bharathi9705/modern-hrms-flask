@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Attendance Tracking — HRMS Portal{% endblock %}
+{% block content %}
+<div class="flex min-h-screen w-full overflow-hidden">
+    {% include 'sidebar.html' %}
+
+    <main class="flex-1 bg-[#0b0f19] p-8 overflow-y-auto space-y-8">
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/60 pb-6">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-white">Attendance Tracking</h1>
+                <p class="text-slate-400 text-sm mt-1">Clock in/out and view attendance records.</p>
+            </div>
+        </div>
+
+        <!-- Clock Widget -->
+        <div class="bg-[#111827]/60 border border-indigo-500/10 p-6 rounded-2xl flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 text-xl">
+                    <i class="fa-solid fa-fingerprint"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-white text-sm">Shift Controller</h3>
+                    <p id="shiftTimerLabel" class="text-xs text-slate-400 mt-0.5">No active shift.</p>
+                </div>
+            </div>
+            <button id="actionClockTriggerBtn" onclick="dispatchClockTransactionEvent()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-3.5 rounded-xl text-xs transition shadow-lg cursor-pointer">
+                <i class="fa-solid fa-stopwatch mr-1"></i> <span id="clockBtnLabel">Clock In</span>
+            </button>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="bg-[#111827]/40 border border-slate-800/80 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-800/50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-700/40">
+                            <th class="py-4 px-6">Employee</th>
+                            <th class="py-4 px-6">Date</th>
+                            <th class="py-4 px-6">Clock In</th>
+                            <th class="py-4 px-6">Clock Out</th>
+                            <th class="py-4 px-6">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceLogsSlot" class="divide-y divide-slate-700/30 text-sm text-slate-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    let isClockedIn = false;
+    const CurrentUserContext = getAuthenticatedIdentityClaims() || { sub: 'User', role: 'employee' };
+
+    async function loadAttendanceLogMatrix() {
+        const res = await runAuthenticatedSecureTransaction('/api/attendance');
+        if (!res) return;
+        const logs = await res.json();
+
+        // Update clock button based on today's status
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayLog = logs.find(l => l.date === todayStr);
+        const btn = document.getElementById('actionClockTriggerBtn');
+        const label = document.getElementById('clockBtnLabel');
+
+        if (todayLog && todayLog.clock_in && !todayLog.clock_out) {
+            isClockedIn = true;
+            label.innerText = "Clock Out";
+            btn.className = "bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-6 py-3.5 rounded-xl text-xs transition shadow-lg cursor-pointer";
+        } else if (todayLog && todayLog.clock_out) {
+            btn.disabled = true;
+            label.innerText = "Shift Complete";
+            btn.className = "bg-slate-700 text-slate-400 font-extrabold px-6 py-3.5 rounded-xl text-xs cursor-not-allowed";
+        }
+
+        const slot = document.getElementById('attendanceLogsSlot');
+        if (!logs || logs.length === 0) {
+            slot.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">No attendance records found.</td></tr>`;
+            return;
+        }
+
+        slot.innerHTML = logs.map(log => `
+            <tr class="hover:bg-slate-800/20 transition">
+                <td class="py-4 px-6 font-bold text-white text-xs">${log.employee_name}</td>
+                <td class="py-4 px-6 font-mono text-xs text-slate-400">${log.date}</td>
+                <td class="py-4 px-6 font-mono text-xs text-emerald-400 font-bold">${log.clock_in || '--:--:--'}</td>
+                <td class="py-4 px-6 font-mono text-xs text-amber-400 font-bold">${log.clock_out || '--:--:--'}</td>
+                <td class="py-4 px-6">
+                    <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
+                        log.status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
+                        log.status === 'Late' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'
+                    }">${log.status}</span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function dispatchClockTransactionEvent() {
+        const action = isClockedIn ? 'clock_out' : 'clock_in';
+        const res = await runAuthenticatedSecureTransaction('/api/attendance/clock-action', {
+            method: 'POST',
+            body: JSON.stringify({ action })
+        });
+        if (res && (res.ok || res.status === 201)) {
+            isClockedIn = !isClockedIn;
+            loadAttendanceLogMatrix();
+        } else if (res) {
+            const err = await res.json();
+            alert(err.error || "Clock action failed.");
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAttendanceLogMatrix);
+</script>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block title %}Corporate Structural Registry Directory Framework{% endblock %}
+{% block content %}
+<div class="p-8 space-y-8 max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Staff Registry</h1>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Lifecycle profile creation, system provisioning, and records configuration control.</p>
+        </div>
+        <button onclick="toggleCreationModalViewEngine(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-2 transition shadow-lg shadow-indigo-600/15 cursor-pointer">
+            <i class="fa-solid fa-user-plus"></i> Provision New Profile
+        </button>
+    </div>
+
+    <div class="glass-panel p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between">
+        <div class="relative flex-grow max-w-md">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-sm"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" id="filterSearchInput" oninput="loadSystemEmployeesTable()" class="w-full bg-slate-100/50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/50 rounded-xl py-2 pl-10 pr-4 text-xs outline-none focus:border-indigo-500 transition text-slate-900 dark:text-white" placeholder="Search by name, identity serial tag metadata...">
+        </div>
+        <select id="filterDeptSelect" onchange="loadSystemEmployeesTable()" class="bg-slate-100/50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/50 rounded-xl py-2 px-4 text-xs outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200">
+            <option value="">All Functional Units</option>
+            <option value="Engineering">Engineering</option>
+            <option value="HR Operations">HR Operations</option>
+            <option value="Marketing Team">Marketing Team</option>
+            <option value="Finance & Audit">Finance & Audit</option>
+        </select>
+    </div>
+
+    <div class="glass-panel rounded-3xl shadow-sm overflow-hidden border border-slate-200/60 dark:border-slate-700/40">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100/70 dark:bg-slate-800/50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-200/60 dark:border-slate-700/40">
+                        <th class="py-4 px-6">Identity Profiling Information</th>
+                        <th class="py-4 px-6">System Access Rights Role</th>
+                        <th class="py-4 px-6">Functional Alignment Unit</th>
+                        <th class="py-4 px-6">Compensation</th>
+                        <th class="py-4 px-6">Status Check</th>
+                        <th class="py-4 px-6 text-center">Action Handlers</th>
+                    </tr>
+                </thead>
+                <tbody id="employeesTableRenderSlot" class="divide-y divide-slate-200/50 dark:divide-slate-700/30 text-sm text-slate-700 dark:text-slate-200">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="creationModalContainer" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden relative border border-slate-200 dark:border-slate-800 animate-zoomIn">
+        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="font-black text-slate-900 dark:text-white text-md">Register Staff Member Profile</h3>
+            <button onclick="toggleCreationModalViewEngine(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <form id="provisioningForm" onsubmit="executeEmployeeCreationPipeline(event)" class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">First Name</label>
+                    <input type="text" id="fieldFirst" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Last Name</label>
+                    <input type="text" id="fieldLast" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Username Key</label>
+                    <input type="text" id="fieldUser" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Secret Pin Password</label>
+                    <input type="password" id="fieldPass" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Corporate Communications Email</label>
+                <input type="email" id="fieldEmail" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Department Target</label>
+                    <select id="fieldDept" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500">
+                        <option value="Engineering">Engineering</option>
+                        <option value="HR Operations">HR Operations</option>
+                        <option value="Marketing Team">Marketing Team</option>
+                        <option value="Finance & Audit">Finance & Audit</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Designation Title</label>
+                    <input type="text" id="fieldDesignation" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500" placeholder="e.g. Staff Architect">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Base Annual Salary ($)</label>
+                    <input type="number" id="fieldSalary" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Contract Joining Date</label>
+                    <input type="date" id="fieldJoiningDate" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            
+            <div class="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="toggleCreationModalViewEngine(false)" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer">Cancel</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-lg shadow-indigo-600/15 transition cursor-pointer">Execute Provisioning</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleCreationModalViewEngine(show) {
+        const modal = document.getElementById('creationModalContainer');
+        if (show) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        } else {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            document.getElementById('provisioningForm').reset();
+        }
+    }
+
+    async function loadSystemEmployeesTable() {
+        const search = document.getElementById('filterSearchInput').value;
+        const dept = document.getElementById('filterDeptSelect').value;
+        
+        const res = await runAuthenticatedSecureTransaction(`/api/employees?search=${encodeURIComponent(search)}&department=${encodeURIComponent(dept)}`);
+        if(!res) return;
+        const employees = await res.json();
+        
+        const slot = document.getElementById('employeesTableRenderSlot');
+        if(!employees || employees.length === 0) {
+            slot.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 font-medium">No matching registry records located.</td></tr>`;
+            return;
+        }
+
+        slot.innerHTML = employees.map(emp => `
+            <tr class="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition">
+                <td class="py-4 px-6">
+                    <div class="font-bold text-slate-900 dark:text-white text-xs">${emp.first_name} ${emp.last_name}</div>
+                    <div class="text-[11px] text-slate-400 font-mono mt-0.5">${emp.email}</div>
+                </td>
+                <td class="py-4 px-6 text-xs uppercase font-mono tracking-wider font-semibold text-slate-500">${emp.role || 'employee'}</td>
+                <td class="py-4 px-6 text-xs text-slate-600 dark:text-slate-300 font-medium">${emp.department}</td>
+                <td class="py-4 px-6 text-xs font-mono font-bold text-indigo-500 dark:text-indigo-400">$${parseFloat(emp.salary).toLocaleString()}</td>
+                <td class="py-4 px-6">
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2.5 py-0.5 rounded-full">
+                        <span class="h-1.5 w-1.5 bg-emerald-500 rounded-full"></span> Active
+                    </span>
+                </td>
+                <td class="py-4 px-6 text-center">
+                    <button onclick="deprovisionSystemAsset('${emp.id}')" class="text-slate-400 hover:text-rose-500 transition duration-150 text-xs cursor-pointer">
+                        <i class="fa-solid fa-user-minus"></i> Deprovision
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function executeEmployeeCreationPipeline(event) {
+        event.preventDefault();
+        
+        const payload = {
+            first_name: document.getElementById('fieldFirst').value,
+            last_name: document.getElementById('fieldLast').value,
+            username: document.getElementById('fieldUser').value,
+            password: document.getElementById('fieldPass').value,
+            email: document.getElementById('fieldEmail').value,
+            department: document.getElementById('fieldDept').value,
+            designation: document.getElementById('fieldDesignation').value,
+            salary: parseFloat(document.getElementById('fieldSalary').value),
+            joining_date: document.getElementById('fieldJoiningDate').value,
+            role: 'employee'
+        };
+
+        const res = await runAuthenticatedSecureTransaction('/api/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        if (res && (res.status === 201 || res.status === 200)) {
+            toggleCreationModalViewEngine(false);
+            loadSystemEmployeesTable();
+            if(typeof showNotificationToast === 'function') {
+                showNotificationToast("Staff asset profile successfully injected into schemas.");
+            } else {
+                alert("Staff asset profile successfully injected into schemas.");
+            }
+        } else {
+            const errData = res ? await res.json() : {};
+            alert("Provisioning Failure: " + (errData.error || "Unknown server response code"));
+        }
+    }
+
+    async function deprovisionSystemAsset(employeeId) {
+        if(!confirm("Are you sure you want to deprovision this identity record completely from memory matrices?")) return;
+        
+        const res = await runAuthenticatedSecureTransaction(`/api/employees/${employeeId}`, {
+            method: 'DELETE'
+        });
+        
+        if(res && res.ok) {
+            loadSystemEmployeesTable();
+        } else {
+            alert("Deprovision execution blocked or identity record locked.");
+        }
+    }
+
+    // Bind document engine sequence initialization
+    document.addEventListener('DOMContentLoaded', loadSystemEmployeesTable);
+</script>
+{% endblock %}
