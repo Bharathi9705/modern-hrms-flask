@@ -43,11 +43,11 @@
 
         /* ── LIGHT THEME ── */
         body.light-mode {
-            --bg-root:       #f0f4ff;
-            --bg-surface:    #ffffff;
-            --bg-card:       #ffffff;
-            --bg-elevated:   #f8faff;
-            --bg-hover:      #eef2ff;
+            --bg-root:       #050816;
+            --bg-surface:    #0b1120;
+            --bg-card:       #0f1a2e;
+            --bg-elevated:   #131f35;
+            --bg-hover:      #1a2740;
             --border:        rgba(124,58,237,0.1);
             --border-bright: rgba(124,58,237,0.25);
             --accent:        #7c3aed;
@@ -104,11 +104,11 @@
 
         /* ── Cards ── */
         .card {
-            background: #1a1050;
-            border: 1px solid rgba(139,92,246,0.2);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             padding: 24px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            box-shadow: var(--shadow-card);
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
             transition: border-color .2s, box-shadow .2s;
