@@ -1,220 +1,398 @@
 {% extends 'base.html' %}
-{% block title %}Leave Management — HRMS Portal{% endblock %}
+{% block title %}Leave Requests — HRMS Portal{% endblock %}
 {% block content %}
-<div class="flex min-h-screen w-full overflow-hidden">
-    {% include 'sidebar.html' %}
+<div class="app-shell">
+{% include 'sidebar.html' %}
+<div class="page-body page-enter">
 
-    <main class="flex-1 bg-[#0b0f19] p-8 overflow-y-auto space-y-8">
+    <div style="padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-surface);flex-shrink:0;">
+        <div>
+            <h1 style="font-size:20px;font-weight:800;color:var(--text-1);margin:0;">Leave Requests</h1>
+            <p style="font-size:12px;color:var(--text-3);margin-top:2px;">Apply for leave and manage team requests</p>
+        </div>
+        <div style="display:flex;gap:12px;">
+            <button onclick="exportCSV('lvBody','leaves.csv')" class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-csv"></i> Export</button>
+            <button onclick="openModal('applyModal')" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Apply Leave</button>
+        </div>
+    </div>
 
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/60 pb-6">
-            <div>
-                <h1 class="text-3xl font-black tracking-tight text-white">Leave Management</h1>
-                <p class="text-slate-400 text-sm mt-1">Manage and track employee leave requests.</p>
+    <!-- Role debug indicator (hidden in production) -->
+    <div id="roleDebug" style="display:none;padding:8px 28px;background:rgba(124,58,237,.1);border-bottom:1px solid var(--border);font-size:12px;color:var(--accent-bright);">
+        Logged in as: <strong id="roleDisplay">loading...</strong>
+    </div>
+
+    <div style="padding:24px 28px;flex:1;overflow-y:auto;">
+
+        <!-- Stat cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+            <div class="stat-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div class="icon-box icon-box-blue" style="width:38px;height:38px;font-size:14px;"><i class="fa-solid fa-inbox"></i></div>
+                    <span class="badge badge-blue">ALL</span>
+                </div>
+                <div id="cnt-all" style="font-size:28px;font-weight:900;color:var(--text-1);">0</div>
+                <div style="font-size:11px;color:var(--text-3);font-weight:600;margin-top:4px;">Total Requests</div>
+            </div>
+            <div class="stat-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div class="icon-box icon-box-amber" style="width:38px;height:38px;font-size:14px;"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <span class="badge badge-amber">PENDING</span>
+                </div>
+                <div id="cnt-pending" style="font-size:28px;font-weight:900;color:#fbbf24;">0</div>
+                <div style="font-size:11px;color:var(--text-3);font-weight:600;margin-top:4px;">Awaiting Approval</div>
+            </div>
+            <div class="stat-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div class="icon-box icon-box-green" style="width:38px;height:38px;font-size:14px;"><i class="fa-solid fa-circle-check"></i></div>
+                    <span class="badge badge-green">APPROVED</span>
+                </div>
+                <div id="cnt-approved" style="font-size:28px;font-weight:900;color:#34d399;">0</div>
+                <div style="font-size:11px;color:var(--text-3);font-weight:600;margin-top:4px;">Approved</div>
+            </div>
+            <div class="stat-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div class="icon-box icon-box-red" style="width:38px;height:38px;font-size:14px;"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <span class="badge badge-red">REJECTED</span>
+                </div>
+                <div id="cnt-rejected" style="font-size:28px;font-weight:900;color:#f87171;">0</div>
+                <div style="font-size:11px;color:var(--text-3);font-weight:600;margin-top:4px;">Rejected</div>
             </div>
         </div>
 
-        <!-- Attendance Clock Widget -->
-        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl border border-indigo-500/20 flex items-center justify-between">
-            <div>
-                <p id="attendanceStatusLabel" class="text-sm font-black text-slate-200">Status: Checking...</p>
-                <p id="shiftTimerLabel" class="text-xs text-slate-400 mt-1">Loading shift data...</p>
-            </div>
-            <div class="flex items-center gap-4">
-                <span id="liveClockDisplay" class="text-sm font-mono font-bold bg-black/30 px-3 py-1 rounded text-indigo-300">00:00:00</span>
-                <button id="biometricClockBtn" onclick="executeBiometricTerminalTransaction()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-1.5">
-                    <i class="fa-solid fa-fingerprint"></i> <span id="clockBtnText">Clock In</span>
-                </button>
-            </div>
+        <!-- Filter tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button id="tab-all"      class="btn btn-sm lv-tab" onclick="switchTab('all')"><i class="fa-solid fa-list"></i> All</button>
+            <button id="tab-Pending"  class="btn btn-sm lv-tab" onclick="switchTab('Pending')"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
+            <button id="tab-Approved" class="btn btn-sm lv-tab" onclick="switchTab('Approved')"><i class="fa-solid fa-check"></i> Approved</button>
+            <button id="tab-Rejected" class="btn btn-sm lv-tab" onclick="switchTab('Rejected')"><i class="fa-solid fa-xmark"></i> Rejected</button>
         </div>
 
-        <!-- Apply Leave Form -->
-        <div class="bg-[#111827]/60 border border-slate-800 p-6 rounded-2xl">
-            <h3 class="text-sm font-black mb-4 flex items-center gap-2 text-white">
-                <i class="fa-solid fa-paper-plane text-indigo-500"></i> Apply for Leave
-            </h3>
-            <form id="submissionLeaveForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Leave Type</label>
-                    <select id="leaveFormType" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-slate-200">
+        <!-- Table -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+            <div style="overflow-x:auto;">
+                <table class="data-table" style="min-width:820px;">
+                    <thead><tr>
+                        <th>Employee</th>
+                        <th>Type</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Days</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th style="text-align:center;min-width:180px;">Actions</th>
+                    </tr></thead>
+                    <tbody id="lvBody">
+                        <tr><td colspan="8" style="text-align:center;padding:48px;color:var(--text-3);">
+                            <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;"></i>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Apply Leave Modal -->
+<div id="applyModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('applyModal')">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="modal-header">
+            <div>
+                <div style="font-size:15px;font-weight:800;color:var(--text-1);">Apply for Leave</div>
+                <div style="font-size:12px;color:var(--text-2);margin-top:2px;">Submit a request for manager approval</div>
+            </div>
+            <button class="modal-close" onclick="closeModal('applyModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="lvForm" onsubmit="submitLeave(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Leave Type</label>
+                    <select id="lv-type" class="form-input">
                         <option value="Casual">Casual Leave</option>
                         <option value="Sick">Sick Leave</option>
                         <option value="Earned">Earned Leave</option>
                         <option value="WFH">Work From Home</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Start Date</label>
-                    <input type="date" id="leaveFormStart" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-slate-200">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Start Date</label>
+                        <input id="lv-s" type="date" class="form-input" required onchange="calcDays()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date</label>
+                        <input id="lv-e" type="date" class="form-input" required onchange="calcDays()">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">End Date</label>
-                    <input type="date" id="leaveFormEnd" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-slate-200">
+                <div id="daysBadge" style="display:none;background:var(--accent-glow);border:1px solid var(--border-bright);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--accent-bright);font-weight:700;">
+                    <i class="fa-solid fa-calendar-days"></i> <span id="dCnt">0</span> day(s) selected
                 </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Reason</label>
-                    <input type="text" id="leaveFormReason" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 text-white" placeholder="Reason for leave...">
+                <div class="form-group">
+                    <label class="form-label">Reason</label>
+                    <textarea id="lv-r" class="form-input" rows="3" required placeholder="Briefly describe the reason for leave..." style="resize:vertical;"></textarea>
                 </div>
-                <div class="md:col-span-4 flex justify-end">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-3 rounded-xl text-xs transition shadow-lg cursor-pointer">Submit Leave Request</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Leave Table -->
-        <div class="bg-[#111827]/40 border border-slate-800/80 rounded-2xl overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-slate-800/50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-700/40">
-                            <th class="py-4 px-6">Employee</th>
-                            <th class="py-4 px-6">Type</th>
-                            <th class="py-4 px-6">Dates</th>
-                            <th class="py-4 px-6">Reason</th>
-                            <th class="py-4 px-6">Status</th>
-                            <th class="py-4 px-6 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaveApplicationsSlot" class="divide-y divide-slate-700/30 text-sm text-slate-200">
-                    </tbody>
-                </table>
             </div>
-        </div>
-
-    </main>
+            <div class="modal-footer">
+                <button type="button" onclick="closeModal('applyModal')" class="btn btn-ghost">Cancel</button>
+                <button type="submit" id="lv-btn" class="btn btn-primary">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Request
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
+<style>
+.lv-tab { background:var(--bg-elevated); color:var(--text-2); border:1px solid var(--border); }
+.lv-tab:hover { background:var(--bg-hover); color:var(--text-1); }
+.lv-tab.active-tab { background:var(--accent) !important; color:white !important; border-color:var(--accent) !important; }
+.approve-btn { background:rgba(16,185,129,.15); color:#34d399; border:1px solid rgba(16,185,129,.3); padding:5px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif; transition:background .15s; }
+.approve-btn:hover { background:rgba(16,185,129,.3); }
+.reject-btn  { background:rgba(239,68,68,.12);  color:#f87171; border:1px solid rgba(239,68,68,.3);  padding:5px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif; transition:background .15s; }
+.reject-btn:hover  { background:rgba(239,68,68,.25); }
+</style>
+
 <script>
-    let isClockedIn = false;
-    let clockInTimestamp = null;
-    let shiftDurationIntervalId = null;
+// ── State ──────────────────────────────────────────────────────────
+var LEAVES = [];
+var ACTIVE_TAB = 'all';
 
-    // Get current user claims
-    const CurrentUserContext = getAuthenticatedIdentityClaims() || { sub: 'User', role: 'employee' };
+// ── Get role RELIABLY from JWT ─────────────────────────────────────
+function getUserRole() {
+    var token = localStorage.getItem('access_token');
+    if (!token) return 'employee';
+    try {
+        var parts = token.split('.');
+        if (parts.length !== 3) return 'employee';
+        var payload = parts[1];
+        // Fix base64 padding
+        while (payload.length % 4 !== 0) payload += '=';
+        payload = payload.replace(/-/g, '+').replace(/_/g, '/');
+        var decoded = JSON.parse(atob(payload));
+        return decoded.role || 'employee';
+    } catch (e) {
+        console.error('JWT decode error:', e);
+        return 'employee';
+    }
+}
 
-    // Live clock
-    setInterval(() => {
-        document.getElementById('liveClockDisplay').innerText = new Date().toLocaleTimeString();
-    }, 1000);
+var USER_ROLE = getUserRole();
 
-    // Clock in/out
-    async function executeBiometricTerminalTransaction() {
-        const action = isClockedIn ? 'clock_out' : 'clock_in';
-        const res = await runAuthenticatedSecureTransaction('/api/attendance/clock-action', {
-            method: 'POST',
-            body: JSON.stringify({ action })
-        });
-        if (res && (res.status === 200 || res.status === 201)) {
-            await syncBiometricTerminalState();
-        } else if (res) {
-            const err = await res.json();
-            alert(err.error || "Clock action failed.");
+// Show role in debug bar
+var dbg = document.getElementById('roleDebug');
+var rdsp = document.getElementById('roleDisplay');
+if (dbg && rdsp) {
+    dbg.style.display = 'block';
+    rdsp.textContent = USER_ROLE;
+}
+
+var TYPE_COLOR = { 'Casual':'badge-blue', 'Sick':'badge-red', 'Earned':'badge-green', 'WFH':'badge-amber' };
+
+// Can this user approve/reject?
+function canManage() {
+    return USER_ROLE === 'admin' || USER_ROLE === 'super_admin' || USER_ROLE === 'hr_manager';
+}
+
+// ── Load leaves ────────────────────────────────────────────────────
+async function loadLeaves() {
+    document.getElementById('lvBody').innerHTML =
+        '<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--text-3);"><i class="fa-solid fa-spinner fa-spin" style="font-size:22px;"></i></td></tr>';
+
+    var res = await runAuthenticatedSecureTransaction('/api/leaves');
+    if (!res) { showToast('Failed to load leaves', 'error'); return; }
+
+    var json = await res.json();
+    LEAVES = Array.isArray(json) ? json : [];
+
+    // Update counters
+    var total = LEAVES.length;
+    var pending  = 0, approved = 0, rejected = 0;
+    for (var i = 0; i < LEAVES.length; i++) {
+        if (LEAVES[i].status === 'Pending')  pending++;
+        if (LEAVES[i].status === 'Approved') approved++;
+        if (LEAVES[i].status === 'Rejected') rejected++;
+    }
+    document.getElementById('cnt-all').textContent      = total;
+    document.getElementById('cnt-pending').textContent  = pending;
+    document.getElementById('cnt-approved').textContent = approved;
+    document.getElementById('cnt-rejected').textContent = rejected;
+
+    drawTable();
+}
+
+// ── Switch tab ─────────────────────────────────────────────────────
+function switchTab(tab) {
+    ACTIVE_TAB = tab;
+    var tabIds = ['tab-all', 'tab-Pending', 'tab-Approved', 'tab-Rejected'];
+    for (var i = 0; i < tabIds.length; i++) {
+        var el = document.getElementById(tabIds[i]);
+        if (el) el.classList.remove('active-tab');
+    }
+    var active = document.getElementById('tab-' + tab);
+    if (active) active.classList.add('active-tab');
+    drawTable();
+}
+
+// ── Draw table ─────────────────────────────────────────────────────
+function drawTable() {
+    var rows = [];
+    for (var i = 0; i < LEAVES.length; i++) {
+        if (ACTIVE_TAB === 'all' || LEAVES[i].status === ACTIVE_TAB) {
+            rows.push(LEAVES[i]);
         }
     }
 
-    async function syncBiometricTerminalState() {
-        const res = await runAuthenticatedSecureTransaction('/api/attendance/status');
-        if (!res) return;
-        const matrix = await res.json();
+    var tbody = document.getElementById('lvBody');
 
-        const btn = document.getElementById('biometricClockBtn');
-        const text = document.getElementById('clockBtnText');
-        const statusLabel = document.getElementById('attendanceStatusLabel');
-        const timerLabel = document.getElementById('shiftTimerLabel');
+    if (rows.length === 0) {
+        var msg = ACTIVE_TAB === 'all'
+            ? 'Click "Apply Leave" to submit your first request.'
+            : 'No ' + ACTIVE_TAB.toLowerCase() + ' requests found.';
+        tbody.innerHTML =
+            '<tr><td colspan="8">' +
+            '<div class="empty-state">' +
+            '<div class="empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div>' +
+            '<div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:6px;">No leave requests</div>' +
+            '<div style="font-size:12px;color:var(--text-3);">' + msg + '</div>' +
+            '</div></td></tr>';
+        return;
+    }
 
-        clearInterval(shiftDurationIntervalId);
+    var html = '';
+    for (var j = 0; j < rows.length; j++) {
+        var item = rows[j];
 
-        if (matrix.status === 'clocked_in') {
-            isClockedIn = true;
-            clockInTimestamp = new Date();
-            statusLabel.innerText = "Status: Active Shift";
-            statusLabel.className = "text-sm font-black text-emerald-400";
-            text.innerText = "Clock Out";
-            btn.className = "bg-rose-500 hover:bg-rose-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-1.5";
-            shiftDurationIntervalId = setInterval(() => {
-                const delta = new Date() - clockInTimestamp;
-                const h = String(Math.floor(delta / 3600000)).padStart(2, '0');
-                const m = String(Math.floor((delta % 3600000) / 60000)).padStart(2, '0');
-                const s = String(Math.floor((delta % 60000) / 1000)).padStart(2, '0');
-                timerLabel.innerText = `Shift running: ${h}:${m}:${s}`;
-            }, 1000);
+        // Avatar initials
+        var name = item.employee_name || 'Unknown';
+        var words = name.split(' ');
+        var ini = '';
+        for (var k = 0; k < words.length && ini.length < 2; k++) {
+            if (words[k]) ini += words[k][0].toUpperCase();
+        }
+
+        // Days count
+        var days = 0;
+        if (item.start_date && item.end_date) {
+            days = Math.max(0, Math.ceil((new Date(item.end_date) - new Date(item.start_date)) / 86400000) + 1);
+        }
+
+        // Status badge
+        var badge = '';
+        if (item.status === 'Approved') {
+            badge = '<span class="badge badge-green"><span class="badge-dot"></span> Approved</span>';
+        } else if (item.status === 'Rejected') {
+            badge = '<span class="badge badge-red"><span class="badge-dot"></span> Rejected</span>';
         } else {
-            isClockedIn = false;
-            statusLabel.innerText = "Status: Checked Out";
-            statusLabel.className = "text-sm font-black text-slate-200";
-            text.innerText = "Clock In";
-            btn.className = "bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-1.5";
-            timerLabel.innerText = "No active shift.";
+            badge = '<span class="badge badge-amber"><span class="badge-dot pulse"></span> Pending</span>';
         }
+
+        // Action buttons — show for admin/hr on pending items
+        var actions = '<span style="font-size:11px;color:var(--text-3);">—</span>';
+        if (canManage() && item.status === 'Pending') {
+            actions =
+                '<div style="display:flex;gap:8px;justify-content:center;">' +
+                '<button class="approve-btn" onclick="doAction(' + item.id + ', \'Approved\')">' +
+                '<i class="fa-solid fa-check"></i> Approve' +
+                '</button>' +
+                '<button class="reject-btn" onclick="doAction(' + item.id + ', \'Rejected\')">' +
+                '<i class="fa-solid fa-xmark"></i> Reject' +
+                '</button>' +
+                '</div>';
+        }
+
+        var tc = TYPE_COLOR[item.leave_type] || 'badge-purple';
+
+        html +=
+            '<tr>' +
+            '<td><div style="display:flex;align-items:center;gap:10px;">' +
+            '<div class="avatar avatar-md" style="background:rgba(124,58,237,.15);color:var(--accent-bright);border:1px solid var(--border-bright);">' + ini + '</div>' +
+            '<div><div style="font-weight:700;color:var(--text-1);font-size:13px;">' + name + '</div>' +
+            '<div style="font-size:11px;color:var(--text-3);">Employee</div></div>' +
+            '</div></td>' +
+            '<td><span class="badge ' + tc + '">' + (item.leave_type || '—') + '</span></td>' +
+            '<td style="font-family:monospace;font-size:12px;color:var(--text-2);">' + (item.start_date || '—') + '</td>' +
+            '<td style="font-family:monospace;font-size:12px;color:var(--text-2);">' + (item.end_date || '—') + '</td>' +
+            '<td><span style="font-weight:700;color:var(--accent-bright);">' + days + 'd</span></td>' +
+            '<td style="font-size:12px;color:var(--text-2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (item.reason || '—') + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td style="text-align:center;">' + actions + '</td>' +
+            '</tr>';
     }
 
-    async function populateLeaveTable() {
-        const res = await runAuthenticatedSecureTransaction('/api/leaves');
-        if (!res) return;
-        const leaves = await res.json();
+    tbody.innerHTML = html;
+}
 
-        const slot = document.getElementById('leaveApplicationsSlot');
-        if (!leaves || leaves.length === 0) {
-            slot.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No leave requests found.</td></tr>`;
+// ── Days calculator ────────────────────────────────────────────────
+function calcDays() {
+    var s = document.getElementById('lv-s').value;
+    var e = document.getElementById('lv-e').value;
+    var badge = document.getElementById('daysBadge');
+    if (s && e) {
+        var d = Math.max(0, Math.ceil((new Date(e) - new Date(s)) / 86400000) + 1);
+        if (d > 0) {
+            document.getElementById('dCnt').textContent = d;
+            badge.style.display = 'block';
             return;
         }
-
-        slot.innerHTML = leaves.map(item => `
-            <tr class="hover:bg-slate-800/20 transition">
-                <td class="py-4 px-6 font-bold text-white text-xs">${item.employee_name || 'N/A'}</td>
-                <td class="py-4 px-6"><span class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-400">${item.leave_type}</span></td>
-                <td class="py-4 px-6 font-mono text-xs text-slate-400">${item.start_date} → ${item.end_date}</td>
-                <td class="py-4 px-6 text-xs text-slate-300 max-w-xs truncate">${item.reason || '-'}</td>
-                <td class="py-4 px-6">
-                    <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
-                        item.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400' :
-                        item.status === 'Rejected' ? 'bg-rose-500/10 text-rose-400' : 'bg-amber-500/10 text-amber-400'
-                    }">${item.status}</span>
-                </td>
-                <td class="py-4 px-6 text-center">
-                    ${CurrentUserContext.role !== 'employee' && item.status === 'Pending' ? `
-                        <button onclick="transitionLeave(${item.id}, 'Approved')" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl mr-1 cursor-pointer"><i class="fa-solid fa-check"></i> Approve</button>
-                        <button onclick="transitionLeave(${item.id}, 'Rejected')" class="bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl cursor-pointer"><i class="fa-solid fa-xmark"></i> Reject</button>
-                    ` : `<span class="text-xs text-slate-500">—</span>`}
-                </td>
-            </tr>
-        `).join('');
     }
+    badge.style.display = 'none';
+}
 
-    document.getElementById('submissionLeaveForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const payload = {
-            leave_type: document.getElementById('leaveFormType').value,
-            start_date: document.getElementById('leaveFormStart').value,
-            end_date: document.getElementById('leaveFormEnd').value,
-            reason: document.getElementById('leaveFormReason').value
-        };
-        const res = await runAuthenticatedSecureTransaction('/api/leaves/apply', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        if (res && res.status === 201) {
-            alert("Leave request submitted successfully!");
-            document.getElementById('submissionLeaveForm').reset();
-            populateLeaveTable();
-        } else if (res) {
-            const err = await res.json();
-            alert(err.error || "Submission failed.");
-        }
+// ── Submit leave ───────────────────────────────────────────────────
+async function submitLeave(e) {
+    e.preventDefault();
+    var btn = document.getElementById('lv-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+
+    var payload = {
+        leave_type: document.getElementById('lv-type').value,
+        start_date: document.getElementById('lv-s').value,
+        end_date:   document.getElementById('lv-e').value,
+        reason:     document.getElementById('lv-r').value
+    };
+
+    var res = await runAuthenticatedSecureTransaction('/api/leaves/apply', {
+        method: 'POST',
+        body: JSON.stringify(payload)
     });
 
-    async function transitionLeave(id, status) {
-        const res = await runAuthenticatedSecureTransaction(`/api/leaves/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify({ status })
-        });
-        if (res && res.ok) {
-            populateLeaveTable();
-        }
-    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Request';
 
-    document.addEventListener('DOMContentLoaded', () => {
-        syncBiometricTerminalState();
-        populateLeaveTable();
+    if (!res) { showToast('Network error', 'error'); return; }
+
+    if (res.status === 201) {
+        showToast('Leave request submitted successfully!', 'success');
+        closeModal('applyModal');
+        document.getElementById('lvForm').reset();
+        document.getElementById('daysBadge').style.display = 'none';
+        switchTab('all');
+        await loadLeaves();
+    } else {
+        var rd = await res.json();
+        showToast(rd.error || 'Submission failed — check if your profile is set up', 'error');
+    }
+}
+
+// ── Approve / Reject ───────────────────────────────────────────────
+async function doAction(id, status) {
+    var res = await runAuthenticatedSecureTransaction('/api/leaves/' + id, {
+        method: 'PUT',
+        body: JSON.stringify({ status: status })
     });
+    if (res && res.ok) {
+        showToast('Leave ' + status.toLowerCase() + ' successfully!', status === 'Approved' ? 'success' : 'warning');
+        await loadLeaves();
+    } else {
+        showToast('Action failed', 'error');
+    }
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+    switchTab('all');
+    loadLeaves();
+});
 </script>
 {% endblock %}

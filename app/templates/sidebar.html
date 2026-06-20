@@ -1,55 +1,120 @@
-<aside class="w-72 bg-[#111827] border-r border-slate-800 p-6 flex flex-col gap-2 shrink-0 min-h-screen">
-    <div class="flex items-center gap-3 mb-8 px-2">
-        <div class="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/20">
-            <i class="fa-solid fa-shield-halved text-lg"></i>
-        </div>
-        <div>
-            <span class="font-black text-sm block tracking-wider text-white uppercase">HRMS CORE</span>
-            <span class="text-[10px] text-indigo-400 block tracking-widest font-bold uppercase">v2.4 Console</span>
+<aside class="sidebar">
+    <!-- Logo -->
+    <div style="padding:20px 16px 16px;border-bottom:1px solid var(--border);">
+        <div class="flex items-center gap-3">
+            <div style="width:34px;height:34px;background:var(--accent-grad);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(124,58,237,.4);">
+                <i class="fa-solid fa-shield-halved" style="color:white;font-size:14px;"></i>
+            </div>
+            <div>
+                <div style="font-size:13px;font-weight:800;color:var(--text-1);letter-spacing:.01em;">HRMS Core</div>
+                <div style="font-size:10px;font-weight:600;color:var(--accent-bright);letter-spacing:.06em;text-transform:uppercase;">Enterprise v2.4</div>
+            </div>
         </div>
     </div>
 
-    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2 mb-2">Management Operations</p>
-    
-    <a href="/view/dashboard" id="nav-dash" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
-        <i class="fa-solid fa-chart-pie text-base w-5 text-center"></i> Operational Dashboard
-    </a>
-    <a href="/view/employees" id="nav-emp" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
-        <i class="fa-solid fa-users text-base w-5 text-center"></i> Employee Directory
-    </a>
-    <a href="/view/attendance" id="nav-att" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
-        <i class="fa-solid fa-calendar-check text-base w-5 text-center"></i> Clock & Attendance
-    </a>
-    <a href="/view/leaves" id="nav-leaves" class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/30 transition">
-        <i class="fa-solid fa-envelope-open-text text-base w-5 text-center"></i> Applications
-    </a>
+    <!-- Navigation -->
+    <nav style="padding:12px 10px;flex:1;overflow-y:auto;">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:0 6px;margin-bottom:8px;">Workspace</div>
 
-    <div class="mt-auto bg-[#1f2937]/50 rounded-2xl p-4 border border-slate-800/80">
-        <div class="flex items-center gap-3 mb-3">
-            <div class="h-9 w-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-sm uppercase" id="userInitial">A</div>
-            <div class="min-w-0 flex-1">
-                <p id="userConsoleName" class="text-xs font-bold text-white truncate">Admin User</p>
-                <span id="userConsoleRole" class="text-[9px] font-black uppercase tracking-wider text-indigo-400">Admin Tier</span>
+        <a href="/view/dashboard" class="nav-item" id="nav-dash">
+            <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </a>
+        <a href="/view/employees" class="nav-item" id="nav-emp">
+            <i class="fa-solid fa-users"></i> Employees
+        </a>
+        <a href="/view/attendance" class="nav-item" id="nav-att">
+            <i class="fa-solid fa-clock"></i> Attendance
+        </a>
+        <a href="/view/leaves" class="nav-item" id="nav-lv">
+            <i class="fa-solid fa-calendar-xmark"></i> Leave Requests
+        </a>
+
+        <div class="divider"></div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:0 6px;margin-bottom:8px;">Preferences</div>
+
+        <button class="nav-item" onclick="toggleThemeMode()" style="width:100%;">
+            <i id="themeIcon" class="fa-solid fa-sun"></i>
+            <span id="themeLabel">Light Mode</span>
+            <!-- Mini toggle pill -->
+            <div id="themePill" style="margin-left:auto;width:32px;height:18px;background:var(--border);border-radius:99px;position:relative;transition:background .2s;flex-shrink:0;">
+                <div id="themeDot" style="position:absolute;top:3px;left:3px;width:12px;height:12px;background:var(--text-3);border-radius:50%;transition:transform .2s,background .2s;"></div>
             </div>
-        </div>
-        <button onclick="localStorage.removeItem('access_token'); window.location.href='/';" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-bold text-xs text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 transition cursor-pointer">
-            <i class="fa-solid fa-power-off"></i> Terminate Link
         </button>
+    </nav>
+
+    <!-- User profile -->
+    <div style="padding:10px;border-top:1px solid var(--border);">
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;">
+            <div class="flex items-center gap-3" style="margin-bottom:10px;">
+                <div id="sb-avatar" class="avatar avatar-md" style="background:var(--accent-glow);border:1px solid var(--border-bright);color:var(--accent-bright);">A</div>
+                <div style="min-width:0;flex:1;">
+                    <div id="sb-name" class="truncate" style="font-size:13px;font-weight:700;color:var(--text-1);">Admin</div>
+                    <div id="sb-role" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-bright);margin-top:1px;">Admin</div>
+                </div>
+                <div class="pulse" style="width:7px;height:7px;background:var(--success);border-radius:50%;flex-shrink:0;"></div>
+            </div>
+            <button onclick="handleLogout()" class="btn btn-danger-soft btn-sm w-full" style="justify-content:center;width:100%;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+            </button>
+        </div>
     </div>
 </aside>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Highlight active link matching current URL path
-        const path = window.location.pathname;
-        if(path.includes('dashboard')) {
-            document.getElementById('nav-dash').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
-        } else if(path.includes('employees')) {
-            document.getElementById('nav-emp').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
-        } else if(path.includes('attendance')) {
-            document.getElementById('nav-att').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
-        } else if(path.includes('leaves')) {
-            document.getElementById('nav-leaves').classList.add('text-indigo-400', 'bg-slate-800/40', 'border', 'border-slate-700/30');
-        }
-    });
+(function initSidebar() {
+    // ── Active nav link ──
+    const path = window.location.pathname;
+    const map = {
+        '/view/dashboard': 'nav-dash',
+        '/view/employees': 'nav-emp',
+        '/view/attendance': 'nav-att',
+        '/view/leaves': 'nav-lv'
+    };
+    const activeId = map[path];
+    if (activeId) {
+        const el = document.getElementById(activeId);
+        if (el) el.classList.add('active');
+    }
+
+    // ── User identity ──
+    const claims = getAuthenticatedIdentityClaims();
+    if (claims) {
+        const name = claims.sub || 'User';
+        const role = claims.role || 'employee';
+        const n = document.getElementById('sb-name'); if (n) n.textContent = name;
+        const r = document.getElementById('sb-role'); if (r) r.textContent = role;
+        const a = document.getElementById('sb-avatar'); if (a) a.textContent = name.charAt(0).toUpperCase();
+    }
+
+    // ── Sync theme toggle pill UI ──
+    syncThemePill();
+})();
+
+function syncThemePill() {
+    const t = localStorage.getItem('hrms_theme') || 'dark';
+    const icon = document.getElementById('themeIcon');
+    const label = document.getElementById('themeLabel');
+    const pill = document.getElementById('themePill');
+    const dot = document.getElementById('themeDot');
+
+    if (t === 'light') {
+        if (icon) icon.className = 'fa-solid fa-moon';
+        if (label) label.textContent = 'Dark Mode';
+        if (pill) pill.style.background = '#7c3aed';
+        if (dot) { dot.style.transform = 'translateX(14px)'; dot.style.background = 'white'; }
+    } else {
+        if (icon) icon.className = 'fa-solid fa-sun';
+        if (label) label.textContent = 'Light Mode';
+        if (pill) pill.style.background = 'var(--border)';
+        if (dot) { dot.style.transform = 'translateX(0)'; dot.style.background = 'var(--text-3)'; }
+    }
+}
+
+// Override toggleThemeMode to also sync pill
+const _origToggle = window.toggleThemeMode;
+window.toggleThemeMode = function() {
+    const cur = localStorage.getItem('hrms_theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+    syncThemePill();
+};
 </script>

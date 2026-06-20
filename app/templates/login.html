@@ -1,93 +1,177 @@
 {% extends 'base.html' %}
-{% block title %}Enterprise Portal Core Authentication Verification Engine{% endblock %}
+{% block title %}Sign In — HRMS Portal{% endblock %}
 {% block content %}
-<div class="min-h-screen w-full flex flex-col items-center justify-center bg-[#0b0f19] p-6 sm:p-12 overflow-y-auto">
-    <div class="w-full max-w-md my-auto py-4">
-        
-        <div class="text-center mb-8">
-            <div class="h-14 w-14 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-500/20 mb-4 animate-bounce">
-                <i class="fa-solid fa-layer-group"></i>
+<div style="display:flex;width:100vw;min-height:100vh;">
+
+    <!-- Left branding panel -->
+    <div style="flex:1;background:linear-gradient(160deg,#0d0b2e 0%,#130d3b 40%,#0b1120 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 48px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:10%;left:10%;width:320px;height:320px;background:radial-gradient(circle,rgba(124,58,237,.15) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:15%;right:5%;width:240px;height:240px;background:radial-gradient(circle,rgba(139,92,246,.1) 0%,transparent 70%);pointer-events:none;"></div>
+
+        <div style="position:relative;z-index:1;max-width:400px;width:100%;">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:48px;">
+                <div style="width:48px;height:48px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(124,58,237,.5);">
+                    <i class="fa-solid fa-shield-halved" style="color:white;font-size:20px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:18px;font-weight:900;color:white;">HRMS Portal</div>
+                    <div style="font-size:11px;color:rgba(167,139,250,.7);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">Enterprise Edition</div>
+                </div>
             </div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-white">Welcome back</h1>
-            <p class="text-sm text-slate-400 mt-2">Enter credentials to verify identity verification context.</p>
+
+            <h1 style="font-size:32px;font-weight:900;color:white;line-height:1.15;margin-bottom:12px;letter-spacing:-.02em;">
+                Manage your<br>
+                <span style="background:linear-gradient(135deg,#a78bfa,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">entire workforce</span>
+            </h1>
+            <p style="font-size:14px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:40px;">Complete HR management — employees, attendance, leaves and analytics in one powerful dashboard.</p>
+
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <div style="width:36px;height:36px;flex-shrink:0;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-users" style="color:#a78bfa;font-size:13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.85);">Employee Management</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,.35);">Onboard, track and manage your team</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <div style="width:36px;height:36px;flex-shrink:0;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-fingerprint" style="color:#34d399;font-size:13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.85);">Attendance Tracking</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,.35);">Real-time clock in/out with shift monitoring</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <div style="width:36px;height:36px;flex-shrink:0;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-calendar-xmark" style="color:#fbbf24;font-size:13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.85);">Leave Management</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,.35);">Apply, approve and track leave requests</div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="glass-panel p-8 rounded-3xl shadow-2xl relative overflow-hidden bg-[#111827]/60 border border-slate-800">
-            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-            
-            <form id="portalLoginForm" class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">Username Handle</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
-                            <i class="fa-solid fa-user-shield"></i>
-                        </span>
-                        <input type="text" id="inputUsername" required class="w-full bg-[#1f2937]/50 border border-slate-700/50 rounded-xl py-3 pl-11 pr-4 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all text-white" placeholder="admin">
+    <!-- Right login panel -->
+    <div style="width:460px;flex-shrink:0;background:#0b1120;border-left:1px solid rgba(139,92,246,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 40px;">
+        <div style="width:100%;max-width:340px;">
+
+            <div style="margin-bottom:28px;">
+                <h2 style="font-size:22px;font-weight:900;color:#f1f5f9;margin-bottom:6px;">Welcome back</h2>
+                <p style="font-size:13px;color:#94a3b8;">Sign in to your HRMS account</p>
+            </div>
+
+            <form id="loginForm" style="display:flex;flex-direction:column;gap:16px;">
+
+                <!-- Username -->
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#475569;">Username</label>
+                    <div style="position:relative;">
+                        <i class="fa-solid fa-user" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#475569;font-size:13px;pointer-events:none;"></i>
+                        <input id="inputUsername" type="text" placeholder="Enter username" required autocomplete="username"
+                            style="width:100%;background:#131f35;border:1px solid rgba(139,92,246,.15);border-radius:8px;padding:10px 13px 10px 38px;font-size:13px;color:#f1f5f9;outline:none;font-family:Inter,sans-serif;transition:border-color .15s,box-shadow .15s;"
+                            onfocus="this.style.borderColor='#8b5cf6';this.style.boxShadow='0 0 0 3px rgba(124,58,237,.15)'"
+                            onblur="this.style.borderColor='rgba(139,92,246,.15)';this.style.boxShadow='none'">
                     </div>
                 </div>
 
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-xs uppercase font-bold text-slate-400 tracking-wider">Access Secret Pin</label>
-                        <a href="#" class="text-xs font-semibold text-indigo-400 hover:underline">Forgot?</a>
+                <!-- Password -->
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#475569;">Password</label>
+                        <a href="#" style="font-size:11px;color:#a78bfa;font-weight:600;text-decoration:none;">Forgot password?</a>
                     </div>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
-                            <i class="fa-solid fa-key"></i>
-                        </span>
-                        <input type="password" id="inputPassword" required class="w-full bg-[#1f2937]/50 border border-slate-700/50 rounded-xl py-3 pl-11 pr-4 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all text-white" placeholder="••••••••">
+                    <div style="position:relative;">
+                        <i class="fa-solid fa-lock" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#475569;font-size:13px;pointer-events:none;"></i>
+                        <input id="inputPassword" type="password" placeholder="••••••••" required autocomplete="current-password"
+                            style="width:100%;background:#131f35;border:1px solid rgba(139,92,246,.15);border-radius:8px;padding:10px 42px 10px 38px;font-size:13px;color:#f1f5f9;outline:none;font-family:Inter,sans-serif;transition:border-color .15s,box-shadow .15s;"
+                            onfocus="this.style.borderColor='#8b5cf6';this.style.boxShadow='0 0 0 3px rgba(124,58,237,.15)'"
+                            onblur="this.style.borderColor='rgba(139,92,246,.15)';this.style.boxShadow='none'">
+                        <!-- Eye toggle — positioned on RIGHT side -->
+                        <button type="button" id="eyeBtn" onclick="togglePwd()"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#475569;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;font-size:13px;transition:color .15s;"
+                            onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#475569'">
+                            <i id="eyeIcon" class="fa-solid fa-eye"></i>
+                        </button>
                     </div>
                 </div>
 
-                <div class="flex items-center">
-                    <input type="checkbox" id="rememberMe" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-700 rounded-sm bg-transparent">
-                    <label for="rememberMe" class="ml-2 block text-xs font-semibold text-slate-400">Validate device identity for 30 execution cycles</label>
+                <!-- Remember me -->
+                <div style="display:flex;align-items:center;gap:8px;margin-top:-4px;">
+                    <input type="checkbox" id="rememberMe" style="accent-color:#7c3aed;width:14px;height:14px;cursor:pointer;">
+                    <label for="rememberMe" style="font-size:12px;color:#94a3b8;cursor:pointer;">Keep me signed in for 30 days</label>
                 </div>
 
-                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 active:transform active:scale-[0.99] text-white font-semibold py-3.5 px-4 rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer">
-                    <span>Verify Identity Pipeline</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                <!-- Submit -->
+                <button type="submit" id="loginBtn"
+                    style="width:100%;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:Inter,sans-serif;transition:all .15s;box-shadow:0 4px 16px rgba(124,58,237,.35);margin-top:4px;"
+                    onmouseover="this.style.opacity='.9';this.style.transform='translateY(-1px)'"
+                    onmouseout="this.style.opacity='1';this.style.transform='none'">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
                 </button>
             </form>
-        </div>
 
+            <!-- Demo credentials box -->
+            <div style="margin-top:20px;padding:12px 16px;background:#0f1a2e;border:1px solid rgba(139,92,246,.12);border-radius:8px;text-align:center;">
+                <span style="font-size:11px;color:#475569;">Demo credentials: </span>
+                <code style="font-size:12px;font-weight:700;color:#94a3b8;background:rgba(124,58,237,.1);padding:2px 6px;border-radius:4px;">hai / admin</code>
+            </div>
+
+            <div style="margin-top:20px;text-align:center;">
+                <span style="font-size:11px;color:#2d3f5a;">© 2026 HRMS Portal. Enterprise Edition.</span>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    document.getElementById('portalLoginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Processing Cryptographic Check...';
+function togglePwd() {
+    const inp = document.getElementById('inputPassword');
+    const ico = document.getElementById('eyeIcon');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.className = 'fa-solid fa-eye-slash';
+    } else {
+        inp.type = 'password';
+        ico.className = 'fa-solid fa-eye';
+    }
+}
 
-        const username = document.getElementById('inputUsername').value;
-        const password = document.getElementById('inputPassword').value;
+document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
 
-        try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                // MATCHING KEY SYNC: Save exactly what the dashboard and base files expect
-                localStorage.setItem('access_token', data.access_token);
-                
-                // Route seamlessly through the security interceptor
-                window.location.href = '/view/dashboard';
-            } else {
-                alert(data.error || "Authentication Exception Engine Block.");
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<span>Verify Identity Pipeline</span> <i class="fa-solid fa-arrow-right text-xs"></i>';
-            }
-        } catch(err) {
-            console.error(err);
-            alert("Critical communication layer exception mapping fault.");
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<span>Verify Identity Pipeline</span> <i class="fa-solid fa-arrow-right text-xs"></i>';
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('inputUsername').value.trim(),
+                password: document.getElementById('inputPassword').value
+            })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            localStorage.setItem('access_token', data.access_token);
+            showToast('Welcome back! Redirecting...', 'success');
+            setTimeout(() => window.location.href = '/view/dashboard', 700);
+        } else {
+            showToast(data.error || 'Invalid credentials', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In';
         }
-    });
+    } catch {
+        showToast('Connection error. Try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In';
+    }
+});
 </script>
 {% endblock %}

@@ -1,118 +1,183 @@
 {% extends 'base.html' %}
-{% block title %}Attendance Tracking — HRMS Portal{% endblock %}
+{% block title %}Attendance — HRMS Portal{% endblock %}
 {% block content %}
-<div class="flex min-h-screen w-full overflow-hidden">
-    {% include 'sidebar.html' %}
+<div class="app-shell">
+{% include 'sidebar.html' %}
+<div class="page-body page-enter">
 
-    <main class="flex-1 bg-[#0b0f19] p-8 overflow-y-auto space-y-8">
-
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/60 pb-6">
-            <div>
-                <h1 class="text-3xl font-black tracking-tight text-white">Attendance Tracking</h1>
-                <p class="text-slate-400 text-sm mt-1">Clock in/out and view attendance records.</p>
-            </div>
+    <!-- Top bar -->
+    <div style="padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-surface);flex-shrink:0;">
+        <div>
+            <h1 style="font-size:20px;font-weight:800;color:var(--text-1);margin:0;">Attendance Tracking</h1>
+            <p style="font-size:12px;color:var(--text-3);margin-top:2px;">Monitor clock-in/out records for your team</p>
         </div>
+        <button onclick="exportCSV('attBody','attendance.csv')" class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-csv"></i> Export</button>
+    </div>
 
-        <!-- Clock Widget -->
-        <div class="bg-[#111827]/60 border border-indigo-500/10 p-6 rounded-2xl flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 text-xl">
+    <div style="padding:24px 28px;flex:1;overflow-y:auto;">
+
+        <!-- Clock widget -->
+        <div style="background:linear-gradient(135deg,#0d0b2e 0%,#130d3b 50%,#0b1120 100%);border:1px solid var(--border-bright);border-radius:var(--radius-xl);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;box-shadow:0 0 40px rgba(124,58,237,.08);">
+            <div class="flex items-center gap-5">
+                <div style="width:52px;height:52px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#a78bfa;">
                     <i class="fa-solid fa-fingerprint"></i>
                 </div>
                 <div>
-                    <h3 class="font-black text-white text-sm">Shift Controller</h3>
-                    <p id="shiftTimerLabel" class="text-xs text-slate-400 mt-0.5">No active shift.</p>
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(167,139,250,.6);margin-bottom:4px;">Shift Controller</div>
+                    <div id="statusLabel" style="font-size:15px;font-weight:800;color:white;">Checking status...</div>
+                    <div id="timerLabel" style="font-size:12px;color:rgba(255,255,255,.4);margin-top:3px;">Loading...</div>
                 </div>
             </div>
-            <button id="actionClockTriggerBtn" onclick="dispatchClockTransactionEvent()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-3.5 rounded-xl text-xs transition shadow-lg cursor-pointer">
-                <i class="fa-solid fa-stopwatch mr-1"></i> <span id="clockBtnLabel">Clock In</span>
-            </button>
+            <div class="flex items-center gap-5">
+                <div style="text-align:right;">
+                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.3);margin-bottom:2px;">Current Time</div>
+                    <div id="clock" style="font-size:24px;font-weight:900;color:white;font-variant-numeric:tabular-nums;letter-spacing:-.01em;">00:00:00</div>
+                </div>
+                <button id="clockBtn" onclick="doClock()" style="background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;padding:12px 22px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;box-shadow:0 4px 20px rgba(16,185,129,.35);white-space:nowrap;">
+                    <i class="fa-solid fa-fingerprint"></i> <span id="clockLabel">Clock In</span>
+                </button>
+            </div>
         </div>
 
-        <!-- Attendance Table -->
-        <div class="bg-[#111827]/40 border border-slate-800/80 rounded-2xl overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-slate-800/50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-700/40">
-                            <th class="py-4 px-6">Employee</th>
-                            <th class="py-4 px-6">Date</th>
-                            <th class="py-4 px-6">Clock In</th>
-                            <th class="py-4 px-6">Clock Out</th>
-                            <th class="py-4 px-6">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="attendanceLogsSlot" class="divide-y divide-slate-700/30 text-sm text-slate-200">
-                    </tbody>
+        <!-- Summary cards -->
+        <div class="grid-3 mb-6">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:12px;">
+                <div class="icon-box icon-box-green" style="width:36px;height:36px;font-size:14px;"><i class="fa-solid fa-user-check"></i></div>
+                <div><div id="s-present" style="font-size:22px;font-weight:900;color:#34d399;">—</div><div style="font-size:11px;color:var(--text-3);font-weight:600;">Present Today</div></div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:12px;">
+                <div class="icon-box icon-box-purple" style="width:36px;height:36px;font-size:14px;"><i class="fa-solid fa-list-check"></i></div>
+                <div><div id="s-total" style="font-size:22px;font-weight:900;color:var(--accent-bright);">—</div><div style="font-size:11px;color:var(--text-3);font-weight:600;">Total Records</div></div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:12px;">
+                <div class="icon-box icon-box-amber" style="width:36px;height:36px;font-size:14px;"><i class="fa-solid fa-person-walking"></i></div>
+                <div><div id="s-active" style="font-size:22px;font-weight:900;color:#fbbf24;">—</div><div style="font-size:11px;color:var(--text-3);font-weight:600;">Active Shifts</div></div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);">
+                    <i class="fa-solid fa-clock" style="color:var(--accent-bright);margin-right:6px;"></i>Attendance Logs
+                </div>
+                <input id="attSrch" class="form-input" style="width:200px;" placeholder="Search employee..." oninput="filterAtt()">
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Employee</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Duration</th><th>Status</th>
+                    </tr></thead>
+                    <tbody id="attBody"></tbody>
                 </table>
             </div>
         </div>
-
-    </main>
+    </div>
+</div>
 </div>
 
 <script>
-    let isClockedIn = false;
-    const CurrentUserContext = getAuthenticatedIdentityClaims() || { sub: 'User', role: 'employee' };
+let clocked = false, shiftTimer = null, allLogs = [];
 
-    async function loadAttendanceLogMatrix() {
-        const res = await runAuthenticatedSecureTransaction('/api/attendance');
-        if (!res) return;
-        const logs = await res.json();
+setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }, 1000);
 
-        // Update clock button based on today's status
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayLog = logs.find(l => l.date === todayStr);
-        const btn = document.getElementById('actionClockTriggerBtn');
-        const label = document.getElementById('clockBtnLabel');
+async function loadAtt() {
+    showSkeleton('attBody', 6, 5);
+    const res = await runAuthenticatedSecureTransaction('/api/attendance');
+    if (!res) return;
+    allLogs = await res.json();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('s-total').textContent = allLogs.length;
+    document.getElementById('s-present').textContent = allLogs.filter(l => l.date === today).length;
+    document.getElementById('s-active').textContent = allLogs.filter(l => l.clock_in && !l.clock_out).length;
+    renderAtt(allLogs);
+}
 
-        if (todayLog && todayLog.clock_in && !todayLog.clock_out) {
-            isClockedIn = true;
-            label.innerText = "Clock Out";
-            btn.className = "bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-6 py-3.5 rounded-xl text-xs transition shadow-lg cursor-pointer";
-        } else if (todayLog && todayLog.clock_out) {
-            btn.disabled = true;
-            label.innerText = "Shift Complete";
-            btn.className = "bg-slate-700 text-slate-400 font-extrabold px-6 py-3.5 rounded-xl text-xs cursor-not-allowed";
-        }
+function filterAtt() {
+    const q = document.getElementById('attSrch').value.toLowerCase();
+    renderAtt(allLogs.filter(l => l.employee_name?.toLowerCase().includes(q)));
+}
 
-        const slot = document.getElementById('attendanceLogsSlot');
-        if (!logs || logs.length === 0) {
-            slot.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">No attendance records found.</td></tr>`;
-            return;
-        }
+function dur(ci, co) {
+    if (!ci || !co) return '—';
+    try {
+        const d = new Date().toISOString().split('T')[0];
+        const diff = new Date(`${d}T${co}`) - new Date(`${d}T${ci}`);
+        if (diff < 0) return '—';
+        return `${Math.floor(diff/3600000)}h ${Math.floor((diff%3600000)/60000)}m`;
+    } catch { return '—'; }
+}
 
-        slot.innerHTML = logs.map(log => `
-            <tr class="hover:bg-slate-800/20 transition">
-                <td class="py-4 px-6 font-bold text-white text-xs">${log.employee_name}</td>
-                <td class="py-4 px-6 font-mono text-xs text-slate-400">${log.date}</td>
-                <td class="py-4 px-6 font-mono text-xs text-emerald-400 font-bold">${log.clock_in || '--:--:--'}</td>
-                <td class="py-4 px-6 font-mono text-xs text-amber-400 font-bold">${log.clock_out || '--:--:--'}</td>
-                <td class="py-4 px-6">
-                    <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
-                        log.status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
-                        log.status === 'Late' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'
-                    }">${log.status}</span>
-                </td>
-            </tr>
-        `).join('');
+function renderAtt(logs) {
+    const b = document.getElementById('attBody');
+    if (!logs.length) {
+        b.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-clock"></i></div>
+            <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:4px;">No records found</div>
+            <div style="font-size:12px;color:var(--text-3);">Clock in to start tracking attendance</div>
+        </div></td></tr>`;
+        return;
     }
+    b.innerHTML = logs.map(l => {
+        const ini = (l.employee_name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+        const badge = l.status==='Present' ? '<span class="badge badge-green"><span class="badge-dot"></span>Present</span>' : l.status==='Late' ? '<span class="badge badge-amber">Late</span>' : '<span class="badge badge-red">Absent</span>';
+        return `<tr>
+            <td><div class="flex items-center gap-3">
+                <div class="avatar avatar-md" style="background:rgba(124,58,237,.15);color:var(--accent-bright);border:1px solid var(--border-bright);">${ini}</div>
+                <span style="font-weight:600;color:var(--text-1);">${l.employee_name}</span>
+            </div></td>
+            <td style="font-family:monospace;font-size:12px;color:var(--text-3);">${l.date}</td>
+            <td style="font-family:monospace;font-size:12px;font-weight:700;color:#34d399;">${l.clock_in||'—'}</td>
+            <td style="font-family:monospace;font-size:12px;font-weight:700;color:#fbbf24;">${l.clock_out||'—'}</td>
+            <td style="font-size:12px;color:var(--text-2);">${dur(l.clock_in,l.clock_out)}</td>
+            <td>${badge}</td>
+        </tr>`;
+    }).join('');
+}
 
-    async function dispatchClockTransactionEvent() {
-        const action = isClockedIn ? 'clock_out' : 'clock_in';
-        const res = await runAuthenticatedSecureTransaction('/api/attendance/clock-action', {
-            method: 'POST',
-            body: JSON.stringify({ action })
-        });
-        if (res && (res.ok || res.status === 201)) {
-            isClockedIn = !isClockedIn;
-            loadAttendanceLogMatrix();
-        } else if (res) {
-            const err = await res.json();
-            alert(err.error || "Clock action failed.");
-        }
+async function syncState() {
+    const res = await runAuthenticatedSecureTransaction('/api/attendance/status');
+    if (!res) return;
+    const d = await res.json();
+    const btn = document.getElementById('clockBtn');
+    const lbl = document.getElementById('clockLabel');
+    const sl = document.getElementById('statusLabel');
+    const tl = document.getElementById('timerLabel');
+    clearInterval(shiftTimer);
+
+    if (d.status === 'clocked_in') {
+        clocked = true; lbl.textContent = 'Clock Out';
+        sl.textContent = 'Status: Active Shift'; sl.style.color = '#34d399';
+        btn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+        btn.style.boxShadow = '0 4px 20px rgba(239,68,68,.35)';
+        const t0 = Date.now();
+        shiftTimer = setInterval(() => {
+            const dt = Date.now() - t0;
+            const h = String(Math.floor(dt/3600000)).padStart(2,'0');
+            const m = String(Math.floor((dt%3600000)/60000)).padStart(2,'0');
+            const s = String(Math.floor((dt%60000)/1000)).padStart(2,'0');
+            tl.textContent = `Running: ${h}:${m}:${s}`;
+        }, 1000);
+    } else {
+        clocked = false; lbl.textContent = 'Clock In';
+        sl.textContent = 'Status: Checked Out'; sl.style.color = 'white';
+        btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+        btn.style.boxShadow = '0 4px 20px rgba(16,185,129,.35)';
+        tl.textContent = 'No active shift.';
     }
+}
 
-    document.addEventListener('DOMContentLoaded', loadAttendanceLogMatrix);
+async function doClock() {
+    const btn = document.getElementById('clockBtn');
+    btn.disabled = true;
+    const res = await runAuthenticatedSecureTransaction('/api/attendance/clock-action', { method:'POST', body:JSON.stringify({ action: clocked ? 'clock_out' : 'clock_in' }) });
+    btn.disabled = false;
+    if (res && (res.ok || res.status === 201)) {
+        showToast(clocked ? 'Clocked out!' : 'Clocked in!', 'success');
+        await syncState(); await loadAtt();
+    } else if (res) { const e = await res.json(); showToast(e.error || 'Failed', 'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', () => { syncState(); loadAtt(); });
 </script>
 {% endblock %}
