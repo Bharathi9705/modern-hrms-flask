@@ -42,14 +42,15 @@
         }
 
         /* ── LIGHT THEME ── */
+        /* ── LIGHT THEME ── */
         body.light-mode {
-            --bg-root:       #0d0b2e;
-            --bg-surface:    #110e38;
-            --bg-card:       #161245;
-            --bg-elevated:   #1c1752;
-            --bg-hover:      #221d60;
-            --border:        rgba(124,58,237,0.1);
-            --border-bright: rgba(124,58,237,0.25);
+            --bg-root:       #f0f4ff;
+            --bg-surface:    #ffffff;
+            --bg-card:       #ffffff;
+            --bg-elevated:   #f1f5ff;
+            --bg-hover:      #e8ecff;
+            --border:        rgba(124,58,237,0.15);
+            --border-bright: rgba(124,58,237,0.3);
             --accent:        #7c3aed;
             --accent-light:  #8b5cf6;
             --accent-bright: #6d28d9;
@@ -59,7 +60,19 @@
             --text-3:        #64748b;
             --text-4:        #94a3b8;
             --shadow-card:   0 2px 12px rgba(124,58,237,0.08);
+            background: #f0f4ff !important;
         }
+        body.light-mode .page-body { background: #f0f4ff !important; }
+        body.light-mode .sidebar { background: #ffffff !important; }
+        body.light-mode .stat-card { background: #ffffff !important; border-color: rgba(124,58,237,0.15) !important; }
+        body.light-mode .card { background: #ffffff !important; }
+        body.light-mode .data-table th { background: #f1f5ff !important; color: #64748b !important; }
+        body.light-mode .data-table td { color: #334155 !important; }
+        body.light-mode .data-table tbody tr:hover { background: #e8ecff !important; }
+        body.light-mode .modal-box { background: #ffffff !important; }
+        body.light-mode .form-input { background: #f1f5ff !important; color: #0f172a !important; }
+        body.light-mode .nav-item { color: #334155 !important; }
+        body.light-mode .nav-item:hover { background: #e8ecff !important; color: #0f172a !important; }
 
         html, body {
             width: 100vw;
